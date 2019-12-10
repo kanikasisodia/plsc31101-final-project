@@ -1,21 +1,13 @@
 ---
-title: "Narrative"
-author: "Kanika S Sisodia"
-date: "11/24/2019"
-output: pdf_document
-  
+title: "Final Project"
+author: "Kanika Singh Sisodia"
+date: "12/8/2019"
+output:
+  pdf_document
   
   
 ---
-## Brief substantive background / goal
-For my project, I have scrapped twitter data on December 8th,2019. There are about 9658 tweets.I am going to demonstrate how we can analyze what people are posting on Twitter on this particular topic (Kashmir).  I aim to  analyze the sentiments of tweets which contain the word Kashmir. My code is divided into following parts:
-1.Extracting tweets using Twitter application.
-2.Cleaning the tweets for further analysis.
-3.Getting sentiment score & Plotting word frequencies.
-4.Wordcloud & Sentiment Analysis.
-
-
-## Loading packages
+# 1. Loading required Libraries
 ```{r}
 library(tidyverse)
 library(rtweet)
@@ -29,34 +21,37 @@ library(tidytext)
 library(syuzhet)
 library(textdata)
 library(RColorBrewer)
+library(tinytex)
 library(latexpdf)
 ```
-
-##Collecting data
-```{r}
+# 2. Taking #Kashmir as the topic and pulling the latest 10000 tweets realated to it.
+```{r message = FALSE}
 #search.string <- "kashmir"
 #no.of.tweets <- 10000
 
 #tweets <- search_tweets(search.string, n=no.of.tweets, lang="en")
 #dim(tweets)
-
+```
+# 3. Converting the raw tweets into a dataframe and writing them into a .csv file
+```{r message = FALSE}
 #tweets <- as.data.frame(tweets %>% select(1:5))
 #write_csv(tweets, "/Users/rajsinghrathore/Desktop/K/Kashmir/Kashmir.csv")
 ```
 
-
-## Cleaning / pre-processing data
+# 4. Reading from the imported tweets
 ```{r}
 Kashmir.df <- read.csv(file = "data/Kashmir.csv")
 str(Kashmir.df)
+```
 
-## converting the data frame into a corpus
+# 5. Taking out the text part of the data and converting it into a corpus
+```{r}
 Kashmir.df$text <- as.character(Kashmir.df$text)
 Kashmir.corpus <- Corpus(VectorSource(Kashmir.df$text))
 inspect(Kashmir.corpus[66])
-
-
-## textprocessing: cleaning the twitter data
+```
+# 6. Cleaning the tweets
+```{r}
 Textprocessing <- function(x)
 {gsub("http[[:alnum:]]*",'', x)
   gsub("http[^[:space:]]*", "", x) ## Remove URLs
@@ -70,8 +65,10 @@ Textprocessing <- function(x)
   
 }
 Kashmir.corpus <- tm_map(Kashmir.corpus,Textprocessing)
+```
 
-## converting the corpusr into a Document Term Matrix
+
+```{r}
 dtm <- DocumentTermMatrix(Kashmir.corpus,
            control = list(stopwords = TRUE,
                           tolower = TRUE,
@@ -82,46 +79,51 @@ dtm
 dim(dtm)
 
 dtm <- as.data.frame(as.matrix(dtm))
+
 ```
 
 
-## Analysis and visualization
+# 7 Frequency Analysis
 ```{r}
-## Plotting the frequency of the 10 most frequent words
 freq <- colSums(dtm)
 freq[1:10]
 length(freq)
-
+```
+# 7.1 Ordering the frequencies to list the most frequent terms
+```{r}
 sort_freq <- sort(freq,decreasing = T)
 head(sort_freq)
+```
 
-pdf("word.frequency.pdf")
+# 7.2 Plotting the 10 most frequent words
+```{r}
+jpeg("word.frequency.jpeg",  480, height = 480,
+     pointsize = 12, quality = 75, bg = "white", res = NA)
  barplot(sort_freq[1:10], las = 2,
         col = brewer.pal(6,"Dark2"),ylim = c(0,14000), main ="Most frequent words",
         cex= 0.5,cex.names= 0.60,
         ylab = "Word frequencies")
  dev.off()
- 
- 
-## creating a wordcloud from the most frequent words 
-pdf("wordcloud.pdf")
+```
+# 8 Wordcloud of the most common terms
+```{r}
+jpeg("wordcloud.jpeg", 480, height = 480,
+     pointsize = 12, quality = 75, bg = "white", res = NA)
 set.seed(110)
 wordcloud(names(sort_freq),sort_freq, max.words = 150, colors = brewer.pal(6,"Spectral"))
 dev.off()
-
-
-##Barplot: Sentiment score for Kashmir using nrc disctionary 
+```
+# 9 Sentiment Analysis: Getting 8 different Emotions (Anger,anticipation disgust,fear,joy,sadness,surprise,trust) And their corresponding Valence From NRC Dictionary
+```{r}
 nrc <- get_nrc_sentiment(Kashmir.df$text)
 head(nrc)
-pdf("barplot1.pdf")
+```
+# 10. Barplot: Sentiment score for Kashmir
+```{r}
+jpeg("barplot1.jpeg", 480, height = 480,
+     pointsize = 12, quality = 75, bg = "white", res = NA)
 barplot(colSums(nrc), las =2,col = brewer.pal(n=10, name="RdBu"),ylim= c(0,12000), cex= 0.5,cex.names= 0.70,ylab = "count", main = "Sentiment Score for Kashmir") 
 dev.off()
+
 ```
-
-## Conclusion
-The above Bar graph represents various sentiments that people have tweeted on Kashmir on December 8th,2019. 
-
-Conclusion:-
-My conclusion is purely based on the 10,000 tweets I pulled out from the Twitter API on a given day.
-
 
